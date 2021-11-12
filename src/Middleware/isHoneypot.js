@@ -51,7 +51,6 @@ async function honeypotIs(address) {
             data: callData,
         })
         .then((val) => {
-            let warnings = [];
             let decoded = web3.eth.abi.decodeParameters(['uint256', 'uint256', 'uint256', 'uint256', 'uint256', 'uint256'], val);
             let buyExpectedOut = web3.utils.toBN(decoded[0]);
             let buyActualOut = web3.utils.toBN(decoded[1]);
@@ -61,14 +60,6 @@ async function honeypotIs(address) {
             let sellGasUsed = web3.utils.toBN(decoded[5]);
             buy_tax = Math.round((buyExpectedOut - buyActualOut) / buyExpectedOut * 100 * 10) / 10;
             sell_tax = Math.round((sellExpectedOut - sellActualOut) / sellExpectedOut * 100 * 10) / 10;
-            if(buy_tax + sell_tax > 80) {
-                warnings.push("Extremely high tax. Effectively a honeypot.")
-            }else if(buy_tax + sell_tax > 40) {
-                warnings.push("Really high tax.");
-            }
-            if(sellGasUsed > 1500000) {
-                warnings.push("Selling costs a lot of gas.");
-            }
             // console.log(buy_tax, sell_tax);
             tokenInfo.buyTax = buy_tax;
             tokenInfo.sellTax = sell_tax;
@@ -93,15 +84,6 @@ async function honeypotIs(address) {
                 tokenInfo.maxTxInBNB = bnbWorth;
             }
 
-            if(warnings.length > 0) {
-                warningsEncountered = true;
-                uiType = 'warning';
-                warningmsg = '<p><ul>WARNINGS';
-                for(let i = 0; i < warnings.length; i++) {
-                    warningmsg += '<li>'+warnings[i]+'</li>';
-                }
-                warningmsg += '</ul></p>';
-            }
 
             return resolve({
                 honeypot: false,
