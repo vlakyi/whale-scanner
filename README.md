@@ -1,7 +1,7 @@
 # Getting started with Scour
 
 After `git clone` to start development:
-
+### `Recommended Node.js version: 16.13`
 ```
 npm install eslint prettier -g
 npm install
