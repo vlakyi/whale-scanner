@@ -3,5 +3,6 @@
     "outputFolder": "src/styles",
     "sourceMap": false,
     "runOnce": false,
-    "enableJs": true
+    "enableJs": true,
+    "minified": true
   }
