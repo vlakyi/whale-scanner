@@ -1,22 +1,20 @@
 // import web3 from 'web3';
-const Web3 = require('web3');
+const Web3 = require('web3')
 
-let tokenName = '';
-let tokenSymbol = '';
-let tokenDecimals = 0;
-let maxSell = 0;
-let maxTXAmount = 0;
-let bnbIN = 1000000000000000000;
-let maxTxBNB = null;
-tokenInfo = {};
+let tokenDecimals = 0
+let maxSell = 0
+let maxTXAmount = 0
+let bnbIN = 1000000000000000000
+let maxTxBNB = null
+const tokenInfo = {}
 
-web3 = new Web3('https://bsc-dataseed.binance.org/');
+const web3 = new Web3('https://bsc-dataseed.binance.org/')
 
 // prettier-ignore
 async function honeypotIs(address) {
-    return new Promise(async (resolve, reject) => {
-        await getMaxes(address);
-        await getBNBIn(address)
+    await getMaxes(address);
+    await getBNBIn(address)
+    return new Promise((resolve, reject) => {
         let encodedAddress = web3.eth.abi.encodeParameter('address', address);
         let contractFuncData = '0xd66383cb';
         let callData = contractFuncData+encodedAddress.substring(2);
@@ -58,28 +56,24 @@ async function honeypotIs(address) {
             let sellActualOut = web3.utils.toBN(decoded[3]);
             let buyGasUsed = web3.utils.toBN(decoded[4]);
             let sellGasUsed = web3.utils.toBN(decoded[5]);
-            buy_tax = Math.round((buyExpectedOut - buyActualOut) / buyExpectedOut * 100 * 10) / 10;
-            sell_tax = Math.round((sellExpectedOut - sellActualOut) / sellExpectedOut * 100 * 10) / 10;
+            const buy_tax = Math.round((buyExpectedOut - buyActualOut) / buyExpectedOut * 100 * 10) / 10;
+            const sell_tax = Math.round((sellExpectedOut - sellActualOut) / sellExpectedOut * 100 * 10) / 10;
             // console.log(buy_tax, sell_tax);
             tokenInfo.buyTax = buy_tax;
             tokenInfo.sellTax = sell_tax;
             tokenInfo.buyGas = numberWithCommas(buyGasUsed);
             tokenInfo.sellGas = numberWithCommas(sellGasUsed);
 
-            let maxdiv = '';
             if(maxTXAmount != 0 || maxSell != 0) {
-                let n = 'Max TX';
                 let x = maxTXAmount;
                 if(maxSell != 0) {
-                    n = 'Max Sell';
                     x = maxSell;
                 }
                 let bnbWorth = '?'
                 if(maxTxBNB != null) {
                     bnbWorth = Math.round(maxTxBNB / 10**15) / 10**3;
                 }
-                let tokens = Math.round(x / 10**tokenDecimals);
-                maxdiv = '<p>'+n+': ' + tokens + ' ' + tokenSymbol + ' (~'+bnbWorth+' BNB)</p>';
+                const tokens = Math.round(x / 10**tokenDecimals);
                 tokenInfo.maxTxInTokens = tokens;
                 tokenInfo.maxTxInBNB = bnbWorth;
             }
@@ -90,7 +84,7 @@ async function honeypotIs(address) {
                 tokenInfo
             })
         })
-        .catch(err => {
+        .catch(() => {
             // console.log(err)
             
             return reject({
@@ -104,7 +98,7 @@ async function honeypotIs(address) {
 // prettier-ignore
 async function getMaxes(address) {
     let sig = web3.eth.abi.encodeFunctionSignature({name: '_maxTxAmount', type: 'function', inputs: []});
-    d = {
+    let d = {
         to: address,
         from: '0x8894e0a0c962cb723c1976a4421c95949be2d4e3',
         value: 0,
@@ -135,44 +129,44 @@ async function getMaxes(address) {
 }
 
 function numberWithCommas(x) {
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
 async function getBNBIn(address) {
-    let amountIn = maxTXAmount;
-    if (maxSell != 0) {
-        amountIn = maxSell;
-    }
-    let WETH = '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c';
-    let path = [address, WETH];
-    let sig = web3.eth.abi.encodeFunctionCall(
-        {
-            name: 'getAmountsOut',
-            type: 'function',
-            inputs: [
-                { type: 'uint256', name: 'amountIn' },
-                { type: 'address[]', name: 'path' },
-            ],
-            outputs: [{ type: 'uint256[]', name: 'amounts' }],
-        },
-        [amountIn, path]
-    );
+  let amountIn = maxTXAmount
+  if (maxSell != 0) {
+    amountIn = maxSell
+  }
+  let WETH = '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c'
+  let path = [address, WETH]
+  let sig = web3.eth.abi.encodeFunctionCall(
+    {
+      name: 'getAmountsOut',
+      type: 'function',
+      inputs: [
+        { type: 'uint256', name: 'amountIn' },
+        { type: 'address[]', name: 'path' },
+      ],
+      outputs: [{ type: 'uint256[]', name: 'amounts' }],
+    },
+    [amountIn, path]
+  )
 
-    d = {
-        to: '0x10ED43C718714eb63d5aA57B78B54704E256024E',
-        from: '0x8894e0a0c962cb723c1976a4421c95949be2d4e3',
-        value: 0,
-        gas: 15000000,
-        data: sig,
-    };
-    try {
-        let val = await web3.eth.call(d);
-        let decoded = web3.eth.abi.decodeParameter('uint256[]', val);
-        bnbIN = web3.utils.toBN(decoded[1]);
-        maxTxBNB = bnbIN;
-    } catch (e) {
-        // console.log(e);
-    }
+  const d = {
+    to: '0x10ED43C718714eb63d5aA57B78B54704E256024E',
+    from: '0x8894e0a0c962cb723c1976a4421c95949be2d4e3',
+    value: 0,
+    gas: 15000000,
+    data: sig,
+  }
+  try {
+    let val = await web3.eth.call(d)
+    let decoded = web3.eth.abi.decodeParameter('uint256[]', val)
+    bnbIN = web3.utils.toBN(decoded[1])
+    maxTxBNB = bnbIN
+  } catch (e) {
+    // console.log(e);
+  }
 }
 
 // honeypotIs('0xcEFB115fB3Fe96bED23368609489d339339C70A4')
@@ -183,4 +177,4 @@ async function getBNBIn(address) {
 //         console.log(err);
 //     });
 // export default honeypotIs;
-module.exports = honeypotIs;
+module.exports = honeypotIs
