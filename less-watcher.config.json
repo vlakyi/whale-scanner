@@ -1,6 +1,6 @@
 {
-    "watchFolder": "src/Components",
-    "outputFolder": "src/Components",
+    "watchFolder": "src/styles/less",
+    "outputFolder": "src/styles",
     "sourceMap": false,
     "runOnce": false,
     "enableJs": true

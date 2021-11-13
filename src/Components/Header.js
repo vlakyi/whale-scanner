@@ -1,5 +1,3 @@
-import './Header.css'
-
 const Header = () => {
   const headerHandler = (e) => {
     e.preventDefault()
