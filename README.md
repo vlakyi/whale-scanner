@@ -1,13 +1,19 @@
 # Getting started with Scour
 
 After `git clone` to start development:
+
 ### `Recommended Node.js version: 16.13`
+
 ```
 npm install eslint prettier -g
 npm install
 git checkout -b "branch_name"
 npm start
 ```
+
+## Less integration
+
+Project is integrated with less compiler. When styling a component u should always use BEM notation, save files as `_camelCase.less` and import it in `index.less`. Changes that happens in underscored files won't refresh the project, to refresh it, save `index.less` (it will recompile all of the imports). The output will be one minified css file. This ensures that all of the styles will be always imported.
 
 ## Available Scripts
 
