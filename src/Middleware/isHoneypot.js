@@ -1,4 +1,4 @@
-// import web3 from 'web3';
+/* TODO: refactor and optimize blockchain calls */
 const Web3 = require('web3')
 
 let tokenDecimals = 0
@@ -10,122 +10,139 @@ const tokenInfo = {}
 
 const web3 = new Web3('https://bsc-dataseed.binance.org/')
 
-// prettier-ignore
 async function honeypotIs(address) {
-    await getMaxes(address);
-    await getBNBIn(address)
-    return new Promise((resolve, reject) => {
-        let encodedAddress = web3.eth.abi.encodeParameter('address', address);
-        let contractFuncData = '0xd66383cb';
-        let callData = contractFuncData+encodedAddress.substring(2);
+  await getMaxes(address)
+  await getBNBIn(address)
+  return new Promise((resolve, reject) => {
+    let encodedAddress = web3.eth.abi.encodeParameter('address', address)
+    let contractFuncData = '0xd66383cb'
+    let callData = contractFuncData + encodedAddress.substring(2)
 
-        let blacklisted = {
-            '0xa914f69aef900beb60ae57679c5d4bc316a2536a': 'SPAMMING SCAM',
-            '0x105e62565a31c269439b29371df4588bf169cef5': 'SCAM',
-            '0xbbd1d56b4ccab9302aecc3d9b18c0c1799fe7525': 'Error: TRANSACTION_FROM_FAILED'
-        };
-        let unableToCheck = {
-            '0x54810d2e8d3a551c8a87390c4c18bb739c5b2063': 'Coin does not utilise PancakeSwap'
-        };
+    let blacklisted = {
+      '0xa914f69aef900beb60ae57679c5d4bc316a2536a': 'SPAMMING SCAM',
+      '0x105e62565a31c269439b29371df4588bf169cef5': 'SCAM',
+      '0xbbd1d56b4ccab9302aecc3d9b18c0c1799fe7525':
+        'Error: TRANSACTION_FROM_FAILED',
+    }
+    let unableToCheck = {
+      '0x54810d2e8d3a551c8a87390c4c18bb739c5b2063':
+        'Coin does not utilise PancakeSwap',
+    }
 
-        if(blacklisted[address.toLowerCase()] !== undefined) {
-            let reason = blacklisted[address.toLowerCase()];
-            return reason;
-        }
-        if(unableToCheck[address.toLowerCase()] !== undefined) {
-            let reason = unableToCheck[address.toLowerCase()];
-            return reason;
+    if (blacklisted[address.toLowerCase()] !== undefined) {
+      let reason = blacklisted[address.toLowerCase()]
+      return reason
+    }
+    if (unableToCheck[address.toLowerCase()] !== undefined) {
+      let reason = unableToCheck[address.toLowerCase()]
+      return reason
+    }
+
+    let val = 100000000000000000
+    if (bnbIN < val) {
+      val = bnbIN - 1000
+    }
+    web3.eth
+      .call({
+        to: '0x2bf75fd2fab5fc635a4c6073864c708dfc8396fc',
+        from: '0x8894e0a0c962cb723c1976a4421c95949be2d4e3',
+        value: val,
+        gas: 45000000,
+        data: callData,
+      })
+      .then((val) => {
+        let decoded = web3.eth.abi.decodeParameters(
+          ['uint256', 'uint256', 'uint256', 'uint256', 'uint256', 'uint256'],
+          val
+        )
+        let buyExpectedOut = web3.utils.toBN(decoded[0])
+        let buyActualOut = web3.utils.toBN(decoded[1])
+        let sellExpectedOut = web3.utils.toBN(decoded[2])
+        let sellActualOut = web3.utils.toBN(decoded[3])
+        let buyGasUsed = web3.utils.toBN(decoded[4])
+        let sellGasUsed = web3.utils.toBN(decoded[5])
+        const buy_tax =
+          Math.round(
+            ((buyExpectedOut - buyActualOut) / buyExpectedOut) * 100 * 10
+          ) / 10
+        const sell_tax =
+          Math.round(
+            ((sellExpectedOut - sellActualOut) / sellExpectedOut) * 100 * 10
+          ) / 10
+        // console.log(buy_tax, sell_tax);
+        tokenInfo.buyTax = buy_tax
+        tokenInfo.sellTax = sell_tax
+        tokenInfo.buyGas = numberWithCommas(buyGasUsed)
+        tokenInfo.sellGas = numberWithCommas(sellGasUsed)
+
+        if (maxTXAmount != 0 || maxSell != 0) {
+          let x = maxTXAmount
+          if (maxSell != 0) {
+            x = maxSell
+          }
+          let bnbWorth = '?'
+          if (maxTxBNB != null) {
+            bnbWorth = Math.round(maxTxBNB / 10 ** 15) / 10 ** 3
+          }
+          const tokens = Math.round(x / 10 ** tokenDecimals)
+          tokenInfo.maxTxInTokens = tokens
+          tokenInfo.maxTxInBNB = bnbWorth
         }
 
-        let val = 100000000000000000;
-        if(bnbIN < val) {
-            val = bnbIN - 1000;
-        }
-        web3.eth.call({
-            to: '0x2bf75fd2fab5fc635a4c6073864c708dfc8396fc',
-            from: '0x8894e0a0c962cb723c1976a4421c95949be2d4e3',
-            value: val,
-            gas: 45000000,
-            data: callData,
+        return resolve({
+          honeypot: false,
+          tokenInfo,
         })
-        .then((val) => {
-            let decoded = web3.eth.abi.decodeParameters(['uint256', 'uint256', 'uint256', 'uint256', 'uint256', 'uint256'], val);
-            let buyExpectedOut = web3.utils.toBN(decoded[0]);
-            let buyActualOut = web3.utils.toBN(decoded[1]);
-            let sellExpectedOut = web3.utils.toBN(decoded[2]);
-            let sellActualOut = web3.utils.toBN(decoded[3]);
-            let buyGasUsed = web3.utils.toBN(decoded[4]);
-            let sellGasUsed = web3.utils.toBN(decoded[5]);
-            const buy_tax = Math.round((buyExpectedOut - buyActualOut) / buyExpectedOut * 100 * 10) / 10;
-            const sell_tax = Math.round((sellExpectedOut - sellActualOut) / sellExpectedOut * 100 * 10) / 10;
-            // console.log(buy_tax, sell_tax);
-            tokenInfo.buyTax = buy_tax;
-            tokenInfo.sellTax = sell_tax;
-            tokenInfo.buyGas = numberWithCommas(buyGasUsed);
-            tokenInfo.sellGas = numberWithCommas(sellGasUsed);
+      })
+      .catch(() => {
+        // console.log(err)
 
-            if(maxTXAmount != 0 || maxSell != 0) {
-                let x = maxTXAmount;
-                if(maxSell != 0) {
-                    x = maxSell;
-                }
-                let bnbWorth = '?'
-                if(maxTxBNB != null) {
-                    bnbWorth = Math.round(maxTxBNB / 10**15) / 10**3;
-                }
-                const tokens = Math.round(x / 10**tokenDecimals);
-                tokenInfo.maxTxInTokens = tokens;
-                tokenInfo.maxTxInBNB = bnbWorth;
-            }
-
-
-            return resolve({
-                honeypot: false,
-                tokenInfo
-            })
+        return reject({
+          honeypot: true,
+          tokenInfo,
         })
-        .catch(() => {
-            // console.log(err)
-            
-            return reject({
-                honeypot: true,
-                tokenInfo
-            })
-        });
-    })
+      })
+  })
 }
 
-// prettier-ignore
 async function getMaxes(address) {
-    let sig = web3.eth.abi.encodeFunctionSignature({name: '_maxTxAmount', type: 'function', inputs: []});
-    let d = {
-        to: address,
-        from: '0x8894e0a0c962cb723c1976a4421c95949be2d4e3',
-        value: 0,
-        gas: 15000000,
-        data: sig,
-    };
-    try {
-        let val = await web3.eth.call(d);
-        maxTXAmount = web3.utils.toBN(val);
-    } catch (e) {
-        // I will nest as much as I want. screw javascript.
-        sig = web3.eth.abi.encodeFunctionSignature({name: 'maxSellTransactionAmount', type: 'function', inputs: []});
-        d = {
-            to: address,
-            from: '0x8894e0a0c962cb723c1976a4421c95949be2d4e3',
-            value: 0,
-            gas: 15000000,
-            data: sig,
-        };
-        try {
-            let val2 = await web3.eth.call(d);
-            maxSell = web3.utils.toBN(val2);
-            console.log(val2, maxSell);
-        } catch (e) {
-            // console.log(e)
-        }
+  let sig = web3.eth.abi.encodeFunctionSignature({
+    name: '_maxTxAmount',
+    type: 'function',
+    inputs: [],
+  })
+  let d = {
+    to: address,
+    from: '0x8894e0a0c962cb723c1976a4421c95949be2d4e3',
+    value: 0,
+    gas: 15000000,
+    data: sig,
+  }
+  try {
+    let val = await web3.eth.call(d)
+    maxTXAmount = web3.utils.toBN(val)
+  } catch (e) {
+    // I will nest as much as I want. screw javascript.
+    sig = web3.eth.abi.encodeFunctionSignature({
+      name: 'maxSellTransactionAmount',
+      type: 'function',
+      inputs: [],
+    })
+    d = {
+      to: address,
+      from: '0x8894e0a0c962cb723c1976a4421c95949be2d4e3',
+      value: 0,
+      gas: 15000000,
+      data: sig,
     }
+    try {
+      let val2 = await web3.eth.call(d)
+      maxSell = web3.utils.toBN(val2)
+      console.log(val2, maxSell)
+    } catch (e) {
+      // console.log(e)
+    }
+  }
 }
 
 function numberWithCommas(x) {
